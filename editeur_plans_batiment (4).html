@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Éditeur de plans — Construction Béton & Acier</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Serif&family=Satoshi:wght@400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #f0ede6;
+    --card: #faf9f6;
+    --border: #d5d0c6;
+    --border2: #e8e4dc;
+    --text: #1c1917;
+    --text2: #57534e;
+    --text3: #a8a29e;
+    --accent: #1e40af;
+    --accent2: #1e3a8a;
+    --accent-soft: #dbeafe;
+    --red: #991b1b;
+    --red-soft: #fef2f2;
+    --green: #166534;
+    --green-soft: #f0fdf4;
+    --orange: #9a3412;
+    --purple: #5b21b6;
+    --voile-fill: #b8b4aa;
+    --voile-stroke: #78716c;
+    --glass-fill: rgba(147,197,253,0.25);
+    --glass-stroke: #3b82f6;
+    --diaphragm: rgba(180,210,240,0.18);
+    --toolbar-bg: #1c1917;
+    --toolbar-text: #e7e5e4;
+    --shadow-sm: 0 1px 2px rgba(28,25,23,0.06);
+    --shadow-md: 0 4px 12px rgba(28,25,23,0.08);
+    --radius: 6px;
+  }
+
+  body {
+    font-family: 'Satoshi', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    height: 44px;
+    background: var(--toolbar-bg);
+    color: var(--toolbar-text);
+    flex-shrink: 0;
+  }
+  .header-brand {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .header-brand .logo {
+    width: 24px; height: 24px;
+    background: var(--accent);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Instrument Serif', serif;
+    font-size: 14px; color: white; font-weight: 400;
+  }
+  .header h1 {
+    font-size: 13px; font-weight: 600; letter-spacing: -0.3px;
+    font-family: 'Satoshi', sans-serif;
+  }
+  .header h1 span { color: #78716c; font-weight: 400; }
+  .header-actions { display: flex; gap: 6px; }
+  .header-actions button {
+    padding: 5px 11px; font-size: 11px; border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 5px; background: rgba(255,255,255,0.06); color: #d6d3d1;
+    cursor: pointer; font-family: 'Satoshi', sans-serif; font-weight: 500;
+    transition: all 0.15s; display: flex; align-items: center; gap: 4px;
+  }
+  .header-actions button:hover { background: rgba(255,255,255,0.12); color: #fff; }
+  .header-actions button.primary {
+    background: var(--accent); border-color: var(--accent2); color: white;
+  }
+  .header-actions button.primary:hover { background: var(--accent2); }
+
+  /* ── Tab bar ── */
+  .tabs {
+    display: flex;
+    background: #292524;
+    padding: 0 12px;
+    flex-shrink: 0;
+    overflow-x: auto;
+    gap: 2px;
+  }
+  .tabs::-webkit-scrollbar { height: 0; }
+  .tab {
+    padding: 8px 14px; font-size: 11px; font-weight: 500; cursor: pointer;
+    color: #a8a29e; border: none; background: none; font-family: 'IBM Plex Mono', monospace;
+    border-bottom: 2px solid transparent; white-space: nowrap;
+    transition: all 0.15s; letter-spacing: -0.2px;
+  }
+  .tab:hover { color: #d6d3d1; }
+  .tab.active { color: #fafaf9; border-bottom-color: var(--accent); }
+  .tab .tab-badge {
+    display: inline-block; margin-left: 5px; padding: 1px 5px;
+    background: rgba(255,255,255,0.08); border-radius: 3px;
+    font-size: 9px; color: #78716c;
+  }
+
+  /* ── Main layout ── */
+  .main { display: flex; flex: 1; overflow: hidden; }
+
+  /* ── Toolbar ── */
+  .toolbar {
+    width: 210px;
+    background: var(--card);
+    border-right: 1px solid var(--border);
+    padding: 12px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    font-size: 12px;
+    box-shadow: var(--shadow-sm);
+  }
+  .toolbar::-webkit-scrollbar { width: 4px; }
+  .toolbar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .tool-section { margin-bottom: 16px; }
+  .tool-section h3 {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--text3); margin-bottom: 7px; font-weight: 600;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .tool-grid { display: flex; flex-wrap: wrap; gap: 4px; }
+  .tool-btn {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    width: 58px; height: 50px; border: 1px solid var(--border2); border-radius: var(--radius);
+    background: white; cursor: pointer; font-size: 9px; font-family: 'IBM Plex Mono', monospace;
+    color: var(--text2); gap: 3px; transition: all 0.15s; font-weight: 500;
+  }
+  .tool-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  .tool-btn.active {
+    border-color: var(--accent); background: var(--accent-soft);
+    color: var(--accent); box-shadow: 0 0 0 1px var(--accent);
+  }
+  .tool-btn svg { width: 18px; height: 18px; }
+
+  .color-row { display: flex; gap: 5px; margin-top: 6px; }
+  .color-dot {
+    width: 18px; height: 18px; border-radius: 50%; border: 2px solid transparent;
+    cursor: pointer; transition: all 0.15s; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
+  }
+  .color-dot:hover { transform: scale(1.15); }
+  .color-dot.active { border-color: var(--text); box-shadow: 0 0 0 2px white, 0 0 0 3.5px var(--text); }
+
+  .stroke-row { display: flex; gap: 4px; margin-top: 6px; align-items: center; }
+  .stroke-btn {
+    padding: 3px 8px; font-size: 10px; border: 1px solid var(--border2); border-radius: 4px;
+    background: white; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-weight: 500;
+    color: var(--text2); transition: all 0.12s;
+  }
+  .stroke-btn:hover { border-color: var(--accent); }
+  .stroke-btn.active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+
+  /* ── Legend panel ── */
+  .legend-section {
+    margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border2);
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 5px; font-size: 10px; color: var(--text2);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .legend-swatch {
+    width: 24px; height: 12px; border-radius: 2px; flex-shrink: 0;
+    border: 1px solid rgba(0,0,0,0.12);
+  }
+
+  /* ── Canvas area ── */
+  .canvas-wrap {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(0,0,0,0.03) 1px, transparent 0);
+    background-size: 24px 24px;
+    position: relative;
+  }
+  .canvas-wrap svg {
+    cursor: crosshair;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.06));
+  }
+
+  /* ── Status bar ── */
+  .status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 16px;
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    font-size: 10px;
+    color: var(--text3);
+    flex-shrink: 0;
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: -0.2px;
+  }
+  .status-dot {
+    display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green); margin-right: 5px;
+  }
+
+  /* ── SVG styles ── */
+  .struct-line { stroke-linecap: round; stroke-linejoin: round; }
+  .ghost-line { opacity: 0.4; stroke-dasharray: 4,3; pointer-events: none; }
+  .snap-indicator { pointer-events: none; }
+
+  text.view-label {
+    font-family: 'IBM Plex Mono', monospace;
+    fill: #78716c;
+    font-size: 11px;
+  }
+  text.view-dim {
+    font-family: 'IBM Plex Mono', monospace;
+    fill: #a8a29e;
+    font-size: 9.5px;
+    letter-spacing: 0.3px;
+  }
+  text.facade-num {
+    font-family: 'IBM Plex Mono', monospace;
+    fill: var(--red);
+    font-size: 11px;
+    font-weight: 600;
+  }
+  text.zone-label {
+    font-family: 'Instrument Serif', serif;
+    fill: #57534e;
+    font-size: 12px;
+    font-style: italic;
+  }
+  text.note-label {
+    font-family: 'IBM Plex Mono', monospace;
+    fill: var(--red);
+    font-size: 9px;
+    font-style: italic;
+  }
+  text.level-label {
+    font-family: 'IBM Plex Mono', monospace;
+    fill: #78716c;
+    font-size: 9px;
+  }
+  text.orient-label {
+    font-family: 'Satoshi', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-brand">
+    <div class="logo">B</div>
+    <h1>Construction Béton & Acier <span>— Éditeur de plans</span></h1>
+  </div>
+  <div class="header-actions">
+    <button onclick="doUndo()" title="Ctrl+Z">↩ Annuler</button>
+    <button onclick="doRedo()" title="Ctrl+Y">↪ Refaire</button>
+    <button onclick="clearCurrentView()">✕ Effacer vue</button>
+    <button class="primary" onclick="exportPNG()">↓ Exporter PNG</button>
+    <button onclick="exportAllPNG()">↓ Tout</button>
+  </div>
+</div>
+
+<div class="tabs" id="tabBar"></div>
+
+<div class="main">
+  <div class="toolbar">
+    <div class="tool-section">
+      <h3>Sélection</h3>
+      <div class="tool-grid">
+        <button class="tool-btn active" data-tool="select" onclick="setTool('select')">
+          <svg viewBox="0 0 20 20"><path d="M5 2l10 7-4.5 1.2L8.5 16z" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
+          <span>Sélect.</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="tool-section">
+      <h3>Contreventement</h3>
+      <div class="tool-grid">
+        <button class="tool-btn" data-tool="xbrace" onclick="setTool('xbrace')">
+          <svg viewBox="0 0 20 20"><rect x="3" y="3" width="14" height="14" fill="none" stroke="currentColor" stroke-width="0.8"/><line x1="3" y1="3" x2="17" y2="17" stroke="currentColor" stroke-width="1.2"/><line x1="17" y1="3" x2="3" y2="17" stroke="currentColor" stroke-width="1.2"/></svg>
+          <span>Croix</span>
+        </button>
+        <button class="tool-btn" data-tool="diag" onclick="setTool('diag')">
+          <svg viewBox="0 0 20 20"><rect x="3" y="3" width="14" height="14" fill="none" stroke="currentColor" stroke-width="0.8"/><line x1="3" y1="17" x2="17" y2="3" stroke="currentColor" stroke-width="1.4"/></svg>
+          <span>Diag.</span>
+        </button>
+        <button class="tool-btn" data-tool="vbrace" onclick="setTool('vbrace')">
+          <svg viewBox="0 0 20 20"><rect x="3" y="3" width="14" height="14" fill="none" stroke="currentColor" stroke-width="0.8"/><line x1="3" y1="3" x2="10" y2="17" stroke="currentColor" stroke-width="1.2"/><line x1="17" y1="3" x2="10" y2="17" stroke="currentColor" stroke-width="1.2"/></svg>
+          <span>Palée V</span>
+        </button>
+        <button class="tool-btn" data-tool="wall" onclick="setTool('wall')">
+          <svg viewBox="0 0 20 20"><rect x="3" y="5" width="14" height="10" fill="currentColor" opacity="0.15" stroke="currentColor" stroke-width="1.2"/><line x1="5" y1="5" x2="9" y2="15" stroke="currentColor" stroke-width="0.6" opacity="0.4"/><line x1="9" y1="5" x2="13" y2="15" stroke="currentColor" stroke-width="0.6" opacity="0.4"/><line x1="13" y1="5" x2="17" y2="15" stroke="currentColor" stroke-width="0.6" opacity="0.4"/></svg>
+          <span>Voile</span>
+        </button>
+        <button class="tool-btn" data-tool="tirant" onclick="setTool('tirant')">
+          <svg viewBox="0 0 20 20"><line x1="3" y1="10" x2="17" y2="10" stroke="currentColor" stroke-width="1.4" stroke-dasharray="3,2"/></svg>
+          <span>Tirant</span>
+        </button>
+        <button class="tool-btn" data-tool="plancher" onclick="setTool('plancher')">
+          <svg viewBox="0 0 20 20"><rect x="2" y="7" width="16" height="6" fill="currentColor" opacity="0.12" stroke="currentColor" stroke-width="1"/><circle cx="6" cy="10" r="0.8" fill="currentColor" opacity="0.3"/><circle cx="10" cy="10" r="0.8" fill="currentColor" opacity="0.3"/><circle cx="14" cy="10" r="0.8" fill="currentColor" opacity="0.3"/><text x="10" y="5.5" text-anchor="middle" font-size="4" fill="currentColor" font-weight="600">D</text></svg>
+          <span>Plancher</span>
+        </button>
+        <button class="tool-btn" data-tool="poutre" onclick="setTool('poutre')">
+          <svg viewBox="0 0 20 20"><line x1="3" y1="10" x2="17" y2="10" stroke="currentColor" stroke-width="2.5"/><line x1="3" y1="7" x2="3" y2="13" stroke="currentColor" stroke-width="1.2"/><line x1="17" y1="7" x2="17" y2="13" stroke="currentColor" stroke-width="1.2"/><text x="10" y="7" text-anchor="middle" font-size="4.5" fill="currentColor" font-weight="600">IPE</text></svg>
+          <span>Poutre</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="tool-section">
+      <h3>Efforts / Vent</h3>
+      <div class="tool-grid">
+        <button class="tool-btn" data-tool="arrow" onclick="setTool('arrow')">
+          <svg viewBox="0 0 20 20"><line x1="4" y1="16" x2="16" y2="4" stroke="currentColor" stroke-width="1.4"/><polygon points="16,4 11,5.5 14.5,9" fill="currentColor"/></svg>
+          <span>Flèche</span>
+        </button>
+        <button class="tool-btn" data-tool="windpath" onclick="setTool('windpath')">
+          <svg viewBox="0 0 20 20"><polyline points="3,15 8,8 14,12 18,4" fill="none" stroke="currentColor" stroke-width="1.4"/><polygon points="18,4 14,6 16,9" fill="currentColor"/></svg>
+          <span>Vent</span>
+        </button>
+        <button class="tool-btn" data-tool="distload" onclick="setTool('distload')">
+          <svg viewBox="0 0 20 20"><line x1="4" y1="5" x2="16" y2="5" stroke="currentColor" stroke-width="0.8"/><line x1="6" y1="5" x2="6" y2="14" stroke="currentColor" stroke-width="0.8"/><line x1="10" y1="5" x2="10" y2="14" stroke="currentColor" stroke-width="0.8"/><line x1="14" y1="5" x2="14" y2="14" stroke="currentColor" stroke-width="0.8"/><polygon points="6,14 4.8,10.5 7.2,10.5" fill="currentColor"/><polygon points="10,14 8.8,10.5 11.2,10.5" fill="currentColor"/><polygon points="14,14 12.8,10.5 15.2,10.5" fill="currentColor"/></svg>
+          <span>Charge</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="tool-section">
+      <h3>Annotations</h3>
+      <div class="tool-grid">
+        <button class="tool-btn" data-tool="text" onclick="setTool('text')">
+          <svg viewBox="0 0 20 20"><text x="5" y="15" font-size="13" font-weight="600" fill="currentColor" font-family="serif">Aa</text></svg>
+          <span>Texte</span>
+        </button>
+        <button class="tool-btn" data-tool="line" onclick="setTool('line')">
+          <svg viewBox="0 0 20 20"><line x1="3" y1="17" x2="17" y2="3" stroke="currentColor" stroke-width="1.4"/></svg>
+          <span>Ligne</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="tool-section">
+      <h3>Couleur</h3>
+      <div class="color-row">
+        <div class="color-dot active" style="background:#1c1917" data-color="#1c1917" onclick="setColor(this)"></div>
+        <div class="color-dot" style="background:#1e40af" data-color="#1e40af" onclick="setColor(this)"></div>
+        <div class="color-dot" style="background:#991b1b" data-color="#991b1b" onclick="setColor(this)"></div>
+        <div class="color-dot" style="background:#166534" data-color="#166534" onclick="setColor(this)"></div>
+        <div class="color-dot" style="background:#9a3412" data-color="#9a3412" onclick="setColor(this)"></div>
+        <div class="color-dot" style="background:#5b21b6" data-color="#5b21b6" onclick="setColor(this)"></div>
+      </div>
+    </div>
+
+    <div class="tool-section">
+      <h3>Épaisseur</h3>
+      <div class="stroke-row">
+        <button class="stroke-btn" data-sw="1" onclick="setStroke(1,this)">Fine</button>
+        <button class="stroke-btn active" data-sw="2" onclick="setStroke(2,this)">Normal</button>
+        <button class="stroke-btn" data-sw="3" onclick="setStroke(3,this)">Épais</button>
+      </div>
+    </div>
+
+    <div class="tool-section">
+      <h3>Style trait</h3>
+      <div class="stroke-row">
+        <button class="stroke-btn active" data-dash="" onclick="setDash('',this)">——</button>
+        <button class="stroke-btn" data-dash="6,4" onclick="setDash('6,4',this)">- - -</button>
+        <button class="stroke-btn" data-dash="2,3" onclick="setDash('2,3',this)">···</button>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="tool-section legend-section">
+      <h3>Légende</h3>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:repeating-linear-gradient(45deg,#b8b4aa,#b8b4aa 2px,#d5d0c6 2px,#d5d0c6 5px)"></div>
+        Voile béton
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:rgba(147,197,253,0.35); border-color:#93c5fd"></div>
+        Vitrage
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:rgba(180,210,240,0.22)"></div>
+        Diaphragme
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:repeating-linear-gradient(0deg,#e7e5e4,#e7e5e4 2px,#faf9f6 2px,#faf9f6 4px)"></div>
+        Bardage / Tôles
+      </div>
+    </div>
+
+    <div class="tool-section" style="margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--border2)">
+      <h3>Affichage</h3>
+      <label style="display:flex; align-items:center; gap:6px; font-size:10px; color:var(--text2); font-family:'IBM Plex Mono',monospace; cursor:pointer">
+        <input type="checkbox" id="togglePortee" checked onchange="togglePorteeDisplay(this.checked)" style="accent-color:var(--accent); cursor:pointer">
+        Portée plancher / tôles
+      </label>
+    </div>
+
+    <div class="tool-section" style="margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--border2)">
+      <h3>Raccourcis</h3>
+      <div style="font-size:9.5px; color:var(--text3); line-height:1.9; font-family:'IBM Plex Mono',monospace">
+        <b>Ctrl+Z</b> Annuler · <b>Ctrl+Y</b> Refaire<br>
+        <b>Suppr</b> Effacer sélect.<br>
+        <b>Échap</b> Annuler dessin<br>
+        <b>1-9</b> Changer de vue<br>
+        <b>Dbl-clic</b> Finir trajet vent
+      </div>
+    </div>
+  </div>
+
+  <div class="canvas-wrap" id="canvasWrap">
+    <svg id="mainSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+</div>
+
+<div class="status">
+  <span><span class="status-dot"></span><span id="statusTool">Sélection</span></span>
+  <span id="statusCoords">x: — y: —</span>
+  <span id="statusHint">Cliquez pour sélectionner un élément</span>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════════════════════════
+const S = 32; // px per meter — slightly larger for clarity
+const SNAP = 8;
+
+const VIEWS = [
+  { id:'plan_rdc',  label:'Plan RDC',      type:'plan',       level:0 },
+  { id:'plan_e1',   label:'Plan 1er ét.',   type:'plan',       level:1 },
+  { id:'plan_toit', label:'Plan Toiture',   type:'plan',       level:2 },
+  { id:'fac_5',     label:'Façade ⑤',      type:'elev_long',  face:5 },
+  { id:'fac_6',     label:'Façade ⑥',      type:'elev_long',  face:6 },
+  { id:'fac_1',     label:'Façade ①',      type:'elev_short', face:1 },
+  { id:'fac_2',     label:'Façade ②',      type:'elev_short', face:2 },
+  { id:'fac_3',     label:'Façade ③',      type:'elev_short', face:3 },
+  { id:'fac_4',     label:'Façade ④',      type:'elev_short', face:4 },
+];
+
+// ════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════
+let currentView = 0;
+let currentTool = 'select';
+let currentColor = '#1c1917';
+let currentStroke = 2;
+let currentDash = '';
+let drawing = false;
+let drawStart = null;
+let windPoints = [];
+let selectedEl = null;
+let showPortee = true;
+
+const userElements = {};
+VIEWS.forEach(v => userElements[v.id] = []);
+const undoStacks = {};
+const redoStacks = {};
+VIEWS.forEach(v => { undoStacks[v.id] = []; redoStacks[v.id] = []; });
+let snapPoints = [];
+
+// ════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════
+function init() {
+  const tabBar = document.getElementById('tabBar');
+  VIEWS.forEach((v, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (i === 0 ? ' active' : '');
+    const badges = { plan_rdc:'RDC', plan_e1:'N+1', plan_toit:'TOIT' };
+    btn.innerHTML = v.label + (badges[v.id] ? `<span class="tab-badge">${badges[v.id]}</span>` : '');
+    btn.onclick = () => switchView(i);
+    tabBar.appendChild(btn);
+  });
+  renderView();
+  setupEvents();
+}
+
+function switchView(idx) {
+  currentView = idx;
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+  deselectAll();
+  cancelDrawing();
+  renderView();
+}
+
+// ════════════════════════════════════════════════════════════
+// SVG DEFS — shared patterns
+// ════════════════════════════════════════════════════════════
+function getSvgDefs() {
+  return `<defs>
+    <!-- Concrete hatch 45° -->
+    <pattern id="hatch45" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="6" stroke="#78716c" stroke-width="0.7"/>
+    </pattern>
+    <!-- Glass pattern -->
+    <pattern id="glassPattern" width="8" height="8" patternUnits="userSpaceOnUse">
+      <rect width="8" height="8" fill="rgba(147,197,253,0.18)"/>
+      <line x1="0" y1="8" x2="8" y2="0" stroke="rgba(59,130,246,0.15)" stroke-width="0.5"/>
+    </pattern>
+    <!-- Bardage horizontal lines -->
+    <pattern id="bardage" width="100" height="5" patternUnits="userSpaceOnUse">
+      <rect width="100" height="5" fill="#f5f5f0"/>
+      <line x1="0" y1="4.5" x2="100" y2="4.5" stroke="#d4d0c8" stroke-width="0.4"/>
+    </pattern>
+    <!-- Tole pattern -->
+    <pattern id="tolePattern" width="12" height="6" patternUnits="userSpaceOnUse">
+      <rect width="12" height="6" fill="#eae8e2"/>
+      <line x1="0" y1="3" x2="12" y2="3" stroke="#c8c4bc" stroke-width="0.3"/>
+    </pattern>
+    <!-- Diaphragm fill -->
+    <pattern id="diaphragmFill" width="10" height="10" patternUnits="userSpaceOnUse">
+      <rect width="10" height="10" fill="rgba(180,210,240,0.12)"/>
+      <circle cx="5" cy="5" r="0.5" fill="rgba(100,150,200,0.15)"/>
+    </pattern>
+    <!-- Arrow markers -->
+    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="context-stroke"/>
+    </marker>
+    <!-- Ground hatch -->
+    <pattern id="groundHatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(-30)">
+      <line x1="0" y1="0" x2="0" y2="6" stroke="#a8a29e" stroke-width="0.5"/>
+    </pattern>
+    <!-- Span arrow (for bardage direction) -->
+    <marker id="spanArrowUp" markerWidth="6" markerHeight="5" refX="3" refY="0" orient="auto">
+      <polygon points="0,5 3,0 6,5" fill="#1e40af"/>
+    </marker>
+    <marker id="spanArrowDown" markerWidth="6" markerHeight="5" refX="3" refY="5" orient="auto">
+      <polygon points="0,0 3,5 6,0" fill="#1e40af"/>
+    </marker>
+  </defs>`;
+}
+
+// ════════════════════════════════════════════════════════════
+// VIEW RENDERING
+// ════════════════════════════════════════════════════════════
+function renderView() {
+  const v = VIEWS[currentView];
+  const svg = document.getElementById('mainSvg');
+  let content = '', vw, vh;
+
+  if (v.type === 'plan') {
+    const r = renderPlan(v.level); content = r.svg; vw = r.w; vh = r.h; snapPoints = r.snaps;
+  } else if (v.type === 'elev_long') {
+    const r = renderElevLong(v.face); content = r.svg; vw = r.w; vh = r.h; snapPoints = r.snaps;
+  } else if (v.type === 'elev_short') {
+    const r = renderElevShort(v.face); content = r.svg; vw = r.w; vh = r.h; snapPoints = r.snaps;
+  }
+
+  const pad = 90;
+  svg.setAttribute('viewBox', `${-pad} ${-pad} ${vw + 2*pad} ${vh + 2*pad}`);
+  svg.setAttribute('width', vw + 2*pad);
+  svg.setAttribute('height', vh + 2*pad);
+
+  svg.innerHTML = `
+    ${getSvgDefs()}
+    <g id="baseLayer">${content}</g>
+    <g id="userLayer"></g>
+    <g id="ghostLayer"></g>
+  `;
+  renderUserElements();
+}
+
+// ── PLAN VIEWS ──
+function renderPlan(level) {
+  const tw = 8*S, th = 6*S, gap = 12*S;
+  const xE = tw + gap;
+  const totalW = tw + gap + tw;
+  let s = '';
+  const snaps = [];
+  const addSnap = (x,y) => snaps.push({x,y});
+
+  if (level < 2) {
+    // ── TOWER FOOTPRINTS ──
+    // Diaphragm fill (hourdis = monolithic slab acting as diaphragm)
+    s += `<rect x="0" y="0" width="${tw}" height="${th}" fill="url(#diaphragmFill)" stroke="none"/>`;
+    s += `<rect x="${xE}" y="0" width="${tw}" height="${th}" fill="url(#diaphragmFill)" stroke="none"/>`;
+    // Outlines
+    s += `<rect x="0" y="0" width="${tw}" height="${th}" fill="none" stroke="#1c1917" stroke-width="2"/>`;
+    s += `<rect x="${xE}" y="0" width="${tw}" height="${th}" fill="none" stroke="#1c1917" stroke-width="2"/>`;
+
+    // ── VOILES Tour Ouest: Façade ① (west side, x=0) and Façade ⑥ (south side, y=th) ──
+    const voileThk = 8; // visual thickness in px
+    // Voile on façade ① (full height of west face of Tour Ouest)
+    s += `<rect x="${-voileThk}" y="0" width="${voileThk}" height="${th}" fill="url(#hatch45)" stroke="#78716c" stroke-width="1"/>`;
+    // Voile on façade ⑥ (full width of south face of Tour Ouest)
+    s += `<rect x="0" y="${th}" width="${tw}" height="${voileThk}" fill="url(#hatch45)" stroke="#78716c" stroke-width="1"/>`;
+
+    // ── COLUMN GRID ── columns at 4m spacing along x in each tower
+    [0, 4*S, tw].forEach(x => {
+      [0, th].forEach(y => {
+        s += columnDot(x, y); addSnap(x, y);
+      });
+    });
+    [xE, xE+4*S, xE+tw].forEach(x => {
+      [0, th].forEach(y => {
+        s += columnDot(x, y); addSnap(x, y);
+      });
+    });
+
+    // Mid-edge snaps
+    [tw/2].forEach(x => { addSnap(x, 0); addSnap(x, th); });
+    [0, tw].forEach(x => addSnap(x, th/2));
+    [xE+tw/2].forEach(x => { addSnap(x, 0); addSnap(x, th); });
+    [xE, xE+tw].forEach(x => addSnap(x, th/2));
+
+    // ── PORTÉE ARROWS (plancher spans max 5 m → spans along 6 m = N-S) ──
+    if (showPortee) {
+      s += spanArrowVert(tw/2, 8, th-8);
+      s += spanArrowVert(xE + tw/2, 8, th-8);
+    }
+
+    // ── DIMS ──
+    s += dimH(0, tw, -30, '8 m');
+    s += dimH(tw, xE, -30, '12 m');
+    s += dimH(xE, xE+tw, -30, '8 m');
+    s += dimV(xE+tw+25, 0, th, '6 m');
+
+    // ── FACADE LABELS (circled numbers) ──
+    s += facadeLabel(-30, th/2, '①');
+    s += facadeLabel(tw/2, -48, '⑤');
+    s += facadeLabel(tw/2, th+voileThk+18, '⑥');
+    s += facadeLabel(tw+14, th/2, '②');
+    s += facadeLabel(xE-14, th/2, '③');
+    s += facadeLabel(xE+tw/2, -48, '⑤');
+    s += facadeLabel(xE+tw/2, th+18, '⑥');
+    s += facadeLabel(xE+tw+30, th/2, '④');
+
+    // ── ZONE LABELS ──
+    s += `<text x="${tw/2}" y="${th/2-6}" text-anchor="middle" class="zone-label">Tour Ouest</text>`;
+    s += `<text x="${xE+tw/2}" y="${th/2-6}" text-anchor="middle" class="zone-label">Tour Est</text>`;
+
+    // Diaphragm note
+    if (showPortee) {
+      s += `<text x="${tw/2}" y="${th/2+24}" text-anchor="middle" class="note-label" style="fill:#1e40af">↕ portée plancher ≤ 5 m</text>`;
+    }
+
+    // ── COMPASS + ORIENTATION ──
+    s += compass(totalW/2, -50);
+    s += `<text x="-55" y="${th/2+4}" text-anchor="middle" class="orient-label" fill="#1c1917">O</text>`;
+    s += `<text x="${totalW+55}" y="${th/2+4}" text-anchor="middle" class="orient-label" fill="#1c1917">E</text>`;
+
+    return { svg: s, w: totalW, h: th + voileThk, snaps };
+
+  } else {
+    // ── TOITURE ── full 28m slab, tôles (no diaphragm)
+    const fullW = 28*S;
+    // Light tole fill
+    s += `<rect x="0" y="0" width="${fullW}" height="${th}" fill="url(#tolePattern)" stroke="none"/>`;
+    s += `<rect x="0" y="0" width="${fullW}" height="${th}" fill="none" stroke="#1c1917" stroke-width="2"/>`;
+
+    // Dashed tower boundaries
+    s += `<line x1="${8*S}" y1="0" x2="${8*S}" y2="${th}" stroke="#a8a29e" stroke-width="0.7" stroke-dasharray="5,3"/>`;
+    s += `<line x1="${20*S}" y1="0" x2="${20*S}" y2="${th}" stroke="#a8a29e" stroke-width="0.7" stroke-dasharray="5,3"/>`;
+
+    // Columns every 4m
+    for (let i = 0; i <= 7; i++) {
+      [0, th].forEach(y => {
+        const x = i*4*S;
+        s += columnDot(x, y); addSnap(x, y);
+      });
+    }
+    for (let i = 0; i <= 7; i++) addSnap(i*4*S, th/2);
+
+    // Span arrows (tôles span max 3m, E-W direction, isostatiques)
+    if (showPortee) {
+      for (let seg = 0; seg < 7; seg++) {
+        const cx = seg * 4 * S + 2*S;
+        s += spanArrowHoriz(10, th-10, cx);
+      }
+    }
+
+    s += dimH(0, 8*S, -45, '8 m');
+    s += dimH(8*S, 20*S, -45, '12 m');
+    s += dimH(20*S, 28*S, -45, '8 m');
+    s += dimH(0, fullW, -28, '28 m');
+    s += dimV(fullW+25, 0, th, '6 m');
+
+    s += `<text x="${4*S}" y="${th/2-6}" text-anchor="middle" class="zone-label">Tour Ouest</text>`;
+    s += `<text x="${14*S}" y="${th/2-6}" text-anchor="middle" class="zone-label">Passerelle</text>`;
+    s += `<text x="${24*S}" y="${th/2-6}" text-anchor="middle" class="zone-label">Tour Est</text>`;
+    s += `<text x="${14*S}" y="${th/2+10}" text-anchor="middle" class="note-label">tôles isostatiques — pas de diaphragme</text>`;
+    if (showPortee) {
+      s += `<text x="${4*S}" y="${th/2+10}" text-anchor="middle" class="note-label" style="fill:#1e40af">portée tôles ≤ 3 m</text>`;
+    }
+
+    s += compass(fullW/2, -55);
+    s += `<text x="-55" y="${th/2+4}" text-anchor="middle" class="orient-label" fill="#1c1917">O</text>`;
+    s += `<text x="${fullW+55}" y="${th/2+4}" text-anchor="middle" class="orient-label" fill="#1c1917">E</text>`;
+
+    return { svg: s, w: fullW, h: th, snaps };
+  }
+}
+
+// ── ELEVATION LONG (Façades ⑤ and ⑥) ──
+function renderElevLong(face) {
+  const w = 28*S, h = 12*S;
+  const snaps = [];
+  const addSnap = (x,y) => snaps.push({x,y});
+  let s = '';
+
+  const isFace6 = (face === 6);
+  // Face 5: O(left)→E(right), towers at 0-8m and 20-28m
+  // Face 6: E(left)→O(right), mirrored
+
+  // Which tower on which side
+  const leftTower = isFace6 ? 'Tour Est' : 'Tour Ouest';
+  const rightTower = isFace6 ? 'Tour Ouest' : 'Tour Est';
+  const leftIsOuest = !isFace6;
+  const rightIsOuest = isFace6;
+
+  // ── GROUND ──
+  s += `<rect x="-5" y="${h}" width="${w+10}" height="7" fill="url(#groundHatch)" stroke="none"/>`;
+  s += `<line x1="-5" y1="${h}" x2="${w+5}" y2="${h}" stroke="#1c1917" stroke-width="2"/>`;
+
+  // ── STORY LINES ──
+  for (let i = 0; i < 3; i++) {
+    s += `<line x1="0" y1="${i*4*S}" x2="${w}" y2="${i*4*S}" stroke="#d4d0c8" stroke-width="0.5" stroke-dasharray="4,3"/>`;
+  }
+  // Level labels
+  s += `<text x="${w+8}" y="${0.5*4*S+3}" text-anchor="start" class="level-label">N+2</text>`;
+  s += `<text x="${w+8}" y="${1.5*4*S+3}" text-anchor="start" class="level-label">N+1</text>`;
+  s += `<text x="${w+8}" y="${2.5*4*S+3}" text-anchor="start" class="level-label">RDC</text>`;
+
+  // ── FILL ZONES ──
+  // Planchers intérieurs = diaphragm at levels 0 and 1 within towers
+  // Left tower levels 0,1
+  s += `<rect x="0" y="${4*S}" width="${8*S}" height="${8*S}" fill="url(#diaphragmFill)" stroke="none"/>`;
+  // Right tower levels 0,1
+  s += `<rect x="${20*S}" y="${4*S}" width="${8*S}" height="${8*S}" fill="url(#diaphragmFill)" stroke="none"/>`;
+  // Top level (panoramic)
+  s += `<rect x="0" y="0" width="${w}" height="${4*S}" fill="rgba(255,248,230,0.3)" stroke="none"/>`;
+
+  // ── VOILE on façade ⑥: Tour Ouest levels 0 & 1 ──
+  if (isFace6) {
+    // Tour Ouest is on the right side of façade ⑥
+    s += `<rect x="${20*S}" y="${4*S}" width="${8*S}" height="${8*S}" fill="url(#hatch45)" stroke="#78716c" stroke-width="1"/>`;
+    // Label
+    s += `<text x="${24*S}" y="${10*S}" text-anchor="middle" class="note-label" style="fill:#78716c">Voile béton</text>`;
+  }
+
+  // ── VITRAGE on façade ⑤: top level (étage panoramique) ──
+  if (!isFace6) {
+    // Façade ⑤: top level is all glass
+    s += `<rect x="0" y="0" width="${w}" height="${4*S}" fill="url(#glassPattern)" stroke="none"/>`;
+    // Glass lines
+    for (let gx = 0; gx < w; gx += 2*S) {
+      s += `<line x1="${gx}" y1="0" x2="${gx}" y2="${4*S}" stroke="rgba(59,130,246,0.2)" stroke-width="0.5"/>`;
+    }
+    s += `<text x="${14*S}" y="${2*S+3}" text-anchor="middle" class="note-label" style="fill:#3b82f6">Vitrage (120 kg/m²) — pas de tirants</text>`;
+  }
+
+  // ── BARDAGE on non-voile, non-glass facades ──
+  // On façade ⑤: levels 0,1 have bardage (not level 2 which is glass)
+  if (!isFace6) {
+    // Left tower levels 0,1
+    s += `<rect x="0" y="${4*S}" width="${8*S}" height="${8*S}" fill="url(#bardage)" stroke="none" opacity="0.5"/>`;
+    // Right tower levels 0,1
+    s += `<rect x="${20*S}" y="${4*S}" width="${8*S}" height="${8*S}" fill="url(#bardage)" stroke="none" opacity="0.5"/>`;
+  }
+  // On façade ⑥: left tower (Tour Est on ⑥) has bardage on all 3 levels, right tower (Tour Ouest on ⑥) has voile on levels 0,1 + bardage top
+  if (isFace6) {
+    // Left side (Tour Est) — all levels bardage
+    s += `<rect x="0" y="0" width="${8*S}" height="${h}" fill="url(#bardage)" stroke="none" opacity="0.4"/>`;
+    // Right side (Tour Ouest) — top level only (levels 0,1 are voile)
+    s += `<rect x="${20*S}" y="0" width="${8*S}" height="${4*S}" fill="url(#bardage)" stroke="none" opacity="0.4"/>`;
+  }
+
+  // ── STRUCTURE OUTLINES ──
+  // Left tower
+  s += `<rect x="0" y="0" width="${8*S}" height="${h}" fill="none" stroke="#1c1917" stroke-width="2"/>`;
+  // Right tower
+  s += `<rect x="${20*S}" y="0" width="${8*S}" height="${h}" fill="none" stroke="#1c1917" stroke-width="2"/>`;
+  // Passerelle (top level only)
+  s += `<rect x="${8*S}" y="0" width="${12*S}" height="${4*S}" fill="none" stroke="#1c1917" stroke-width="2"/>`;
+
+  // Floor lines within towers
+  s += `<line x1="0" y1="${4*S}" x2="${8*S}" y2="${4*S}" stroke="#1c1917" stroke-width="1.5"/>`;
+  s += `<line x1="0" y1="${8*S}" x2="${8*S}" y2="${8*S}" stroke="#1c1917" stroke-width="1.5"/>`;
+  s += `<line x1="${20*S}" y1="${4*S}" x2="${28*S}" y2="${4*S}" stroke="#1c1917" stroke-width="1.5"/>`;
+  s += `<line x1="${20*S}" y1="${8*S}" x2="${28*S}" y2="${8*S}" stroke="#1c1917" stroke-width="1.5"/>`;
+
+  // Column lines at main boundaries
+  [0, 8, 20, 28].forEach(m => {
+    s += `<line x1="${m*S}" y1="0" x2="${m*S}" y2="${h}" stroke="#1c1917" stroke-width="1.8"/>`;
+  });
+  // Intermediate columns at 4m
+  [4, 24].forEach(m => {
+    s += `<line x1="${m*S}" y1="0" x2="${m*S}" y2="${h}" stroke="#a8a29e" stroke-width="0.7" stroke-dasharray="3,3"/>`;
+  });
+
+  // ── SPAN DIRECTION ARROWS (bardage vertical span between floors) ──
+  if (showPortee) {
+    if (!isFace6) {
+      [1, 2].forEach(lvl => {
+        const yTop = lvl * 4*S + 10;
+        const yBot = (lvl+1) * 4*S - 10;
+        [4*S, 24*S].forEach(cx => {
+          s += spanArrowVert(cx, yTop, yBot, '#1e40af', 0.6);
+        });
+      });
+    }
+    if (isFace6) {
+      [0, 1, 2].forEach(lvl => {
+        const yTop = lvl * 4*S + 10;
+        const yBot = (lvl+1) * 4*S - 10;
+        s += spanArrowVert(4*S, yTop, yBot, '#1e40af', 0.6);
+      });
+      s += spanArrowVert(24*S, 10, 4*S - 10, '#1e40af', 0.6);
+    }
+  }
+
+  // ── SNAP POINTS ──
+  [0, 4, 8, 12, 16, 20, 24, 28].forEach(mx => {
+    [0, 4, 8, 12].forEach(my => addSnap(mx*S, my*S));
+  });
+
+  // ── DIMS ──
+  s += dimH(0, 8*S, -30, '8 m');
+  s += dimH(8*S, 20*S, -30, '12 m');
+  s += dimH(20*S, 28*S, -30, '8 m');
+  s += dimV(-30, 0, 4*S, '4 m');
+  s += dimV(-30, 4*S, 8*S, '4 m');
+  s += dimV(-30, 8*S, 12*S, '4 m');
+
+  // ── LABELS ──
+  s += `<text x="${4*S}" y="${h+22}" text-anchor="middle" class="zone-label">${leftTower}</text>`;
+  s += `<text x="${24*S}" y="${h+22}" text-anchor="middle" class="zone-label">${rightTower}</text>`;
+
+  const sideL = isFace6 ? 'E' : 'O';
+  const sideR = isFace6 ? 'O' : 'E';
+  s += `<text x="-55" y="${h/2+4}" text-anchor="middle" class="orient-label" fill="#1c1917">${sideL}</text>`;
+  s += `<text x="${w+55}" y="${h/2+4}" text-anchor="middle" class="orient-label" fill="#1c1917">${sideR}</text>`;
+
+  // Façade title
+  s += `<text x="${14*S}" y="-50" text-anchor="middle" style="font-family:'Instrument Serif',serif; font-size:14px; fill:#57534e">Façade ${face===5?'⑤':'⑥'}</text>`;
+
+  // Pinned supports at base (façade view)
+  [0, 4, 8, 20, 24, 28].forEach(m => {
+    s += pinnedSupport(m*S, h);
+  });
+
+  return { svg: s, w, h, snaps };
+}
+
+// ── ELEVATION SHORT (Façades ①②③④) ──
+function renderElevShort(face) {
+  const w = 6*S, h = 12*S;
+  const snaps = [];
+  let s = '';
+
+  const tourName = face <= 2 ? 'Tour Ouest' : 'Tour Est';
+
+  // ── GROUND ──
+  s += `<rect x="-5" y="${h}" width="${w+10}" height="7" fill="url(#groundHatch)" stroke="none"/>`;
+  s += `<line x1="-5" y1="${h}" x2="${w+5}" y2="${h}" stroke="#1c1917" stroke-width="2"/>`;
+
+  // ── STORY LINES ──
+  for (let i = 0; i < 3; i++) {
+    s += `<line x1="0" y1="${i*4*S}" x2="${w}" y2="${i*4*S}" stroke="#d4d0c8" stroke-width="0.5" stroke-dasharray="4,3"/>`;
+  }
+  s += `<text x="${w+8}" y="${0.5*4*S+3}" text-anchor="start" class="level-label">N+2</text>`;
+  s += `<text x="${w+8}" y="${1.5*4*S+3}" text-anchor="start" class="level-label">N+1</text>`;
+  s += `<text x="${w+8}" y="${2.5*4*S+3}" text-anchor="start" class="level-label">RDC</text>`;
+
+  // ── VOILE on façade ① (Tour Ouest west face): levels 0 & 1 ──
+  if (face === 1) {
+    s += `<rect x="0" y="${4*S}" width="${w}" height="${8*S}" fill="url(#hatch45)" stroke="#78716c" stroke-width="1"/>`;
+    s += `<text x="${w/2}" y="${10*S}" text-anchor="middle" class="note-label" style="fill:#78716c">Voile béton</text>`;
+    // Top level: bardage (no voile)
+    s += `<rect x="0" y="0" width="${w}" height="${4*S}" fill="url(#bardage)" stroke="none" opacity="0.4"/>`;
+  } else {
+    // Other short façades: bardage everywhere
+    s += `<rect x="0" y="0" width="${w}" height="${h}" fill="url(#bardage)" stroke="none" opacity="0.4"/>`;
+  }
+
+  // Floor fills (diaphragm for levels 0,1)
+  if (face === 1) {
+    // Already filled with voile
+  } else {
+    s += `<rect x="0" y="${4*S}" width="${w}" height="${8*S}" fill="url(#diaphragmFill)" stroke="none"/>`;
+  }
+
+  // ── OUTLINE ──
+  s += `<rect x="0" y="0" width="${w}" height="${h}" fill="none" stroke="#1c1917" stroke-width="2"/>`;
+
+  // Floor lines
+  s += `<line x1="0" y1="${4*S}" x2="${w}" y2="${4*S}" stroke="#1c1917" stroke-width="1.5"/>`;
+  s += `<line x1="0" y1="${8*S}" x2="${w}" y2="${8*S}" stroke="#1c1917" stroke-width="1.5"/>`;
+
+  // Columns at edges
+  s += `<line x1="0" y1="0" x2="0" y2="${h}" stroke="#1c1917" stroke-width="2"/>`;
+  s += `<line x1="${w}" y1="0" x2="${w}" y2="${h}" stroke="#1c1917" stroke-width="2"/>`;
+
+  // ── SPAN DIRECTION ARROWS (bardage vertical) ──
+  if (showPortee) {
+    if (face === 1) {
+      s += spanArrowVert(w/2, 10, 4*S - 10, '#1e40af', 0.6);
+    } else {
+      [0, 1, 2].forEach(lvl => {
+        const yTop = lvl * 4*S + 10;
+        const yBot = (lvl+1) * 4*S - 10;
+        s += spanArrowVert(w/2, yTop, yBot, '#1e40af', 0.6);
+      });
+    }
+  }
+
+  // ── SNAP POINTS ──
+  [0, 3, 6].forEach(mx => {
+    [0, 4, 8, 12].forEach(my => {
+      snaps.push({x: mx*S, y: my*S});
+    });
+  });
+
+  // ── DIMS ──
+  s += dimH(0, w, -30, '6 m');
+  s += dimV(-30, 0, 4*S, '4 m');
+  s += dimV(-30, 4*S, 8*S, '4 m');
+  s += dimV(-30, 8*S, 12*S, '4 m');
+
+  // ── SIDE LABELS ──
+  const labels = { 1: ['N','S'], 2: ['S','N'], 3: ['N','S'], 4: ['S','N'] };
+  const [lL, lR] = labels[face] || ['',''];
+  s += `<text x="-50" y="${h/2+4}" text-anchor="middle" class="orient-label" fill="#1c1917">${lL}</text>`;
+  s += `<text x="${w+50}" y="${h/2+4}" text-anchor="middle" class="orient-label" fill="#1c1917">${lR}</text>`;
+
+  s += `<text x="${w/2}" y="${h+22}" text-anchor="middle" class="zone-label">${tourName}</text>`;
+  s += `<text x="${w/2}" y="-50" text-anchor="middle" style="font-family:'Instrument Serif',serif; font-size:14px; fill:#57534e">Façade ${['','①','②','③','④'][face]}</text>`;
+
+  // Pinned supports
+  [0, w].forEach(x => s += pinnedSupport(x, h));
+
+  return { svg: s, w, h, snaps };
+}
+
+// ════════════════════════════════════════════════════════════
+// SVG HELPERS
+// ════════════════════════════════════════════════════════════
+function columnDot(x, y) {
+  return `<circle cx="${x}" cy="${y}" r="4.5" fill="white" stroke="#1c1917" stroke-width="1.5"/>`;
+}
+
+function spanArrowVert(cx, yTop, yBot, color='#1e40af', opacity=0.5) {
+  return `<g opacity="${opacity}">
+    <line x1="${cx}" y1="${yTop}" x2="${cx}" y2="${yBot}" stroke="${color}" stroke-width="0.7" stroke-dasharray="3,2"/>
+    <polygon points="${cx-3},${yTop+6} ${cx},${yTop-1} ${cx+3},${yTop+6}" fill="${color}"/>
+    <polygon points="${cx-3},${yBot-6} ${cx},${yBot+1} ${cx+3},${yBot-6}" fill="${color}"/>
+  </g>`;
+}
+
+function spanArrowHoriz(yTop, yBot, cx, color='#1e40af', opacity=0.4) {
+  const my = (yTop+yBot)/2;
+  return `<g opacity="${opacity}">
+    <line x1="${cx}" y1="${yTop+3}" x2="${cx}" y2="${yBot-3}" stroke="${color}" stroke-width="0.7" stroke-dasharray="3,2"/>
+    <polygon points="${cx-3},${yTop+8} ${cx},${yTop} ${cx+3},${yTop+8}" fill="${color}"/>
+    <polygon points="${cx-3},${yBot-8} ${cx},${yBot} ${cx+3},${yBot-8}" fill="${color}"/>
+  </g>`;
+}
+
+function pinnedSupport(cx, cy) {
+  const sz = 8;
+  return `<polygon points="${cx},${cy} ${cx-sz},${cy+sz+2} ${cx+sz},${cy+sz+2}" fill="none" stroke="#78716c" stroke-width="1"/>`;
+}
+
+function dimH(x1, x2, y, label) {
+  const mx = (x1+x2)/2;
+  return `<g>
+    <line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="#a8a29e" stroke-width="0.5"/>
+    <line x1="${x1}" y1="${y-4}" x2="${x1}" y2="${y+4}" stroke="#a8a29e" stroke-width="0.5"/>
+    <line x1="${x2}" y1="${y-4}" x2="${x2}" y2="${y+4}" stroke="#a8a29e" stroke-width="0.5"/>
+    <text x="${mx}" y="${y-5}" text-anchor="middle" class="view-dim">${label}</text>
+  </g>`;
+}
+
+function dimV(x, y1, y2, label) {
+  const my = (y1+y2)/2;
+  return `<g>
+    <line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="#a8a29e" stroke-width="0.5"/>
+    <line x1="${x-4}" y1="${y1}" x2="${x+4}" y2="${y1}" stroke="#a8a29e" stroke-width="0.5"/>
+    <line x1="${x-4}" y1="${y2}" x2="${x+4}" y2="${y2}" stroke="#a8a29e" stroke-width="0.5"/>
+    <text x="${x+5}" y="${my+3}" text-anchor="start" class="view-dim" transform="rotate(-90,${x+5},${my+3})">${label}</text>
+  </g>`;
+}
+
+function facadeLabel(cx, cy, numChar) {
+  return `<text x="${cx}" y="${cy+4}" text-anchor="middle" class="facade-num">${numChar}</text>`;
+}
+
+function compass(cx, cy) {
+  return `<g transform="translate(${cx},${cy})">
+    <line x1="0" y1="6" x2="0" y2="-12" stroke="#1e3a5c" stroke-width="1.2"/>
+    <polygon points="0,-15 -3.5,-9 3.5,-9" fill="#1e3a5c"/>
+    <text x="0" y="-19" text-anchor="middle" style="font-size:10px;font-weight:700;fill:#1e3a5c;font-family:'IBM Plex Mono',monospace">N</text>
+  </g>`;
+}
+
+// ════════════════════════════════════════════════════════════
+// USER ELEMENTS RENDERING
+// ════════════════════════════════════════════════════════════
+function renderUserElements() {
+  const layer = document.getElementById('userLayer');
+  if (!layer) return;
+  const vid = VIEWS[currentView].id;
+  const els = userElements[vid];
+  let html = '';
+
+  els.forEach((el, idx) => {
+    const sel = `data-idx="${idx}" class="user-el"`;
+
+    switch(el.type) {
+      case 'xbrace': {
+        const {x1,y1,x2,y2} = el;
+        html += `<line ${sel} x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${el.color}" stroke-width="${el.sw}" stroke-dasharray="${el.dash}"/>`;
+        html += `<line ${sel} x1="${x2}" y1="${y1}" x2="${x1}" y2="${y2}" stroke="${el.color}" stroke-width="${el.sw}" stroke-dasharray="${el.dash}"/>`;
+        html += `<rect ${sel} x="${x1}" y="${y1}" width="${x2-x1}" height="${y2-y1}" fill="none" stroke="${el.color}" stroke-width="0.4" stroke-dasharray="3,3" opacity="0.25"/>`;
+        break;
+      }
+      case 'diag':
+      case 'line':
+      case 'tirant': {
+        const da = el.type === 'tirant' ? '4,3' : el.dash;
+        html += `<line ${sel} x1="${el.x1}" y1="${el.y1}" x2="${el.x2}" y2="${el.y2}" stroke="${el.color}" stroke-width="${el.sw}" stroke-dasharray="${da}"/>`;
+        break;
+      }
+      case 'vbrace': {
+        const {x1,y1,x2,y2} = el;
+        const mx = (x1+x2)/2;
+        const w = Math.abs(x2-x1), h = Math.abs(y2-y1);
+        let px, py;
+        if (h >= w) { px = mx; py = y2; } else { px = x2; py = (y1+y2)/2; }
+        html += `<line ${sel} x1="${x1}" y1="${y1}" x2="${px}" y2="${py}" stroke="${el.color}" stroke-width="${el.sw}" stroke-dasharray="${el.dash}"/>`;
+        html += `<line ${sel} x1="${x2}" y1="${y1 === py ? y2 : y1}" x2="${px}" y2="${py}" stroke="${el.color}" stroke-width="${el.sw}" stroke-dasharray="${el.dash}"/>`;
+        break;
+      }
+      case 'wall': {
+        html += `<rect ${sel} x="${el.x1}" y="${el.y1}" width="${el.x2-el.x1}" height="${el.y2-el.y1}" fill="url(#hatch45)" stroke="${el.color}" stroke-width="${el.sw}" opacity="0.7"/>`;
+        break;
+      }
+      case 'plancher': {
+        const pw = el.x2-el.x1, ph = el.y2-el.y1;
+        html += `<rect ${sel} x="${el.x1}" y="${el.y1}" width="${pw}" height="${ph}" fill="url(#diaphragmFill)" stroke="${el.color}" stroke-width="${el.sw}" opacity="0.8"/>`;
+        html += `<rect ${sel} x="${el.x1}" y="${el.y1}" width="${pw}" height="${ph}" fill="none" stroke="${el.color}" stroke-width="${el.sw}"/>`;
+        const cx = el.x1 + pw/2, cy = el.y1 + ph/2;
+        html += `<text ${sel} x="${cx}" y="${cy+3}" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:8px;fill:${el.color};font-weight:600;opacity:0.7">DIAPH.</text>`;
+        break;
+      }
+      case 'poutre': {
+        const {x1:bx1,y1:by1,x2:bx2,y2:by2} = el;
+        const bdx = bx2-bx1, bdy = by2-by1;
+        const blen = Math.sqrt(bdx*bdx+bdy*bdy) || 1;
+        // Normal perpendicular for I-profile flanges
+        const bnx = -bdy/blen, bny = bdx/blen;
+        const flangeHalf = 6; // px half-width of flange caps
+        const bsw = Math.max(el.sw, 2.5);
+        // Web (main line)
+        html += `<line ${sel} x1="${bx1}" y1="${by1}" x2="${bx2}" y2="${by2}" stroke="${el.color}" stroke-width="${bsw}" stroke-dasharray="${el.dash}"/>`;
+        // Flange end caps (I-shape)
+        html += `<line ${sel} x1="${bx1+bnx*flangeHalf}" y1="${by1+bny*flangeHalf}" x2="${bx1-bnx*flangeHalf}" y2="${by1-bny*flangeHalf}" stroke="${el.color}" stroke-width="1.8"/>`;
+        html += `<line ${sel} x1="${bx2+bnx*flangeHalf}" y1="${by2+bny*flangeHalf}" x2="${bx2-bnx*flangeHalf}" y2="${by2-bny*flangeHalf}" stroke="${el.color}" stroke-width="1.8"/>`;
+        // Label along the beam
+        if (el.label) {
+          const bmx = (bx1+bx2)/2, bmy = (by1+by2)/2;
+          const angle = Math.atan2(bdy, bdx) * 180 / Math.PI;
+          // Flip label if beam goes right-to-left so text is always readable
+          const rot = (angle > 90 || angle < -90) ? angle + 180 : angle;
+          const labelOffset = 10;
+          html += `<text ${sel} x="${bmx + bnx*labelOffset}" y="${bmy + bny*labelOffset}" text-anchor="middle" dominant-baseline="middle" transform="rotate(${rot},${bmx + bnx*labelOffset},${bmy + bny*labelOffset})" style="font-family:'IBM Plex Mono',monospace;font-size:9px;fill:${el.color};font-weight:600">${el.label}</text>`;
+        }
+        // Selection highlight
+        if (idx === selectedEl) {
+          html += `<line x1="${bx1}" y1="${by1}" x2="${bx2}" y2="${by2}" stroke="#3b82f6" stroke-width="${bsw+3}" opacity="0.2"/>`;
+        }
+        break;
+      }
+      case 'arrow': {
+        html += `<line ${sel} x1="${el.x1}" y1="${el.y1}" x2="${el.x2}" y2="${el.y2}" stroke="${el.color}" stroke-width="${el.sw}" marker-end="url(#arrowhead)" stroke-dasharray="${el.dash}"/>`;
+        break;
+      }
+      case 'windpath': {
+        if (el.points.length < 2) break;
+        const pts = el.points;
+        let d = `M${pts[0].x},${pts[0].y}`;
+        for (let i = 1; i < pts.length; i++) d += ` L${pts[i].x},${pts[i].y}`;
+        html += `<path ${sel} d="${d}" fill="none" stroke="${el.color}" stroke-width="${el.sw}" stroke-dasharray="${el.dash}" marker-end="url(#arrowhead)"/>`;
+        pts.forEach(p => html += `<circle cx="${p.x}" cy="${p.y}" r="2.5" fill="${el.color}" opacity="0.5"/>`);
+        break;
+      }
+      case 'distload': {
+        const {x1,y1,x2,y2} = el;
+        const dx = x2-x1, dy = y2-y1;
+        const len = Math.sqrt(dx*dx+dy*dy);
+        const n = Math.max(3, Math.round(len/20));
+        const ux = dx/len, uy = dy/len;
+        const px = -uy * 15, py = ux * 15;
+        html += `<line ${sel} x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${el.color}" stroke-width="${el.sw*0.6}"/>`;
+        for (let i = 0; i <= n; i++) {
+          const t = i/n;
+          const ax = x1 + dx*t, ay = y1 + dy*t;
+          html += `<line x1="${ax}" y1="${ay}" x2="${ax+px}" y2="${ay+py}" stroke="${el.color}" stroke-width="${el.sw*0.7}" marker-end="url(#arrowhead)"/>`;
+        }
+        break;
+      }
+      case 'text': {
+        html += `<text ${sel} x="${el.x}" y="${el.y}" fill="${el.color}" font-size="12" font-family="'IBM Plex Mono',monospace" font-weight="500">${el.text}</text>`;
+        break;
+      }
+    }
+  });
+
+  layer.innerHTML = html;
+
+  layer.querySelectorAll('.user-el').forEach(el => {
+    el.style.cursor = 'pointer';
+    el.addEventListener('click', (e) => {
+      if (currentTool === 'select') {
+        e.stopPropagation();
+        selectElement(parseInt(el.dataset.idx));
+      }
+    });
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+// INTERACTION / TOOLS
+// ════════════════════════════════════════════════════════════
+function setupEvents() {
+  const svg = document.getElementById('mainSvg');
+  svg.addEventListener('mousedown', onMouseDown);
+  svg.addEventListener('mousemove', onMouseMove);
+  svg.addEventListener('mouseup', onMouseUp);
+  svg.addEventListener('dblclick', onDblClick);
+  svg.addEventListener('click', (e) => {
+    if (currentTool === 'select' && !e.target.closest('.user-el')) deselectAll();
+  });
+  document.addEventListener('keydown', onKeyDown);
+}
+
+function getSvgPoint(e) {
+  const svg = document.getElementById('mainSvg');
+  const pt = svg.createSVGPoint();
+  pt.x = e.clientX; pt.y = e.clientY;
+  const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+  return { x: svgP.x, y: svgP.y };
+}
+
+function snapTo(p) {
+  let best = null, bestD = SNAP * SNAP;
+  snapPoints.forEach(sp => {
+    const d = (p.x-sp.x)**2 + (p.y-sp.y)**2;
+    if (d < bestD) { bestD = d; best = sp; }
+  });
+  const vid = VIEWS[currentView].id;
+  userElements[vid].forEach(el => {
+    const pts = [];
+    if (el.x1 !== undefined) { pts.push({x:el.x1,y:el.y1}); pts.push({x:el.x2,y:el.y2}); }
+    if (el.points) el.points.forEach(pp => pts.push(pp));
+    pts.forEach(sp => {
+      const d = (p.x-sp.x)**2 + (p.y-sp.y)**2;
+      if (d < bestD) { bestD = d; best = sp; }
+    });
+  });
+  return best || p;
+}
+
+function onMouseDown(e) {
+  if (e.button !== 0) return;
+  if (currentTool === 'select') return;
+  if (currentTool === 'windpath') {
+    const p = snapTo(getSvgPoint(e));
+    windPoints.push(p);
+    renderGhost();
+    return;
+  }
+  if (currentTool === 'text') {
+    const p = snapTo(getSvgPoint(e));
+    const txt = prompt('Texte :');
+    if (txt) addElement({ type: 'text', x: p.x, y: p.y, text: txt, color: currentColor });
+    return;
+  }
+  drawing = true;
+  drawStart = snapTo(getSvgPoint(e));
+}
+
+function onMouseMove(e) {
+  const p = getSvgPoint(e);
+  const sp = snapTo(p);
+  document.getElementById('statusCoords').textContent = `x: ${Math.round(sp.x/S*10)/10} m  y: ${Math.round(sp.y/S*10)/10} m`;
+
+  const ghost = document.getElementById('ghostLayer');
+  if (!ghost) return;
+  let gh = '';
+  const snapped = snapTo(p);
+  if (snapped !== p) {
+    gh += `<circle cx="${snapped.x}" cy="${snapped.y}" r="6" fill="none" stroke="${currentColor}" stroke-width="0.8" opacity="0.4"/>`;
+  }
+  if (drawing && drawStart) {
+    gh += getGhostPreview(drawStart, snapped);
+  }
+  if (currentTool === 'windpath' && windPoints.length > 0) {
+    const pts = [...windPoints, snapped];
+    let d = `M${pts[0].x},${pts[0].y}`;
+    for (let i = 1; i < pts.length; i++) d += ` L${pts[i].x},${pts[i].y}`;
+    gh += `<path d="${d}" fill="none" stroke="${currentColor}" stroke-width="${currentStroke}" stroke-dasharray="4,3" opacity="0.5" marker-end="url(#arrowhead)"/>`;
+    pts.forEach(pp => gh += `<circle cx="${pp.x}" cy="${pp.y}" r="3" fill="${currentColor}" opacity="0.3"/>`);
+  }
+  ghost.innerHTML = gh;
+}
+
+function getGhostPreview(start, end) {
+  const {x:x1,y:y1} = start;
+  const {x:x2,y:y2} = end;
+  let gh = '';
+  const c = currentColor, sw = currentStroke;
+
+  switch(currentTool) {
+    case 'xbrace':
+      gh += `<rect x="${Math.min(x1,x2)}" y="${Math.min(y1,y2)}" width="${Math.abs(x2-x1)}" height="${Math.abs(y2-y1)}" fill="none" stroke="${c}" stroke-width="0.5" opacity="0.4" stroke-dasharray="3,3"/>`;
+      gh += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${sw}" opacity="0.4"/>`;
+      gh += `<line x1="${x2}" y1="${y1}" x2="${x1}" y2="${y2}" stroke="${c}" stroke-width="${sw}" opacity="0.4"/>`;
+      break;
+    case 'diag': case 'line': case 'tirant':
+      gh += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${sw}" opacity="0.4" stroke-dasharray="${currentTool==='tirant'?'4,3':currentDash}"/>`;
+      break;
+    case 'vbrace': {
+      const mx = (x1+x2)/2, w = Math.abs(x2-x1), h = Math.abs(y2-y1);
+      let px, py;
+      if (h >= w) { px = mx; py = y2; } else { px = x2; py = (y1+y2)/2; }
+      gh += `<line x1="${x1}" y1="${y1}" x2="${px}" y2="${py}" stroke="${c}" stroke-width="${sw}" opacity="0.4"/>`;
+      gh += `<line x1="${x2}" y1="${y1===py?y2:y1}" x2="${px}" y2="${py}" stroke="${c}" stroke-width="${sw}" opacity="0.4"/>`;
+      break;
+    }
+    case 'wall':
+      gh += `<rect x="${Math.min(x1,x2)}" y="${Math.min(y1,y2)}" width="${Math.abs(x2-x1)||4}" height="${Math.abs(y2-y1)||4}" fill="url(#hatch45)" stroke="${c}" stroke-width="${sw}" opacity="0.4"/>`;
+      break;
+    case 'plancher':
+      gh += `<rect x="${Math.min(x1,x2)}" y="${Math.min(y1,y2)}" width="${Math.abs(x2-x1)||4}" height="${Math.abs(y2-y1)||4}" fill="url(#diaphragmFill)" stroke="${c}" stroke-width="${sw}" opacity="0.5"/>`;
+      break;
+    case 'poutre': {
+      gh += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${Math.max(sw,2.5)}" opacity="0.5"/>`;
+      // I-profile end caps
+      const pdx = x2-x1, pdy = y2-y1;
+      const plen = Math.sqrt(pdx*pdx+pdy*pdy) || 1;
+      const pnx = -pdy/plen*5, pny = pdx/plen*5;
+      gh += `<line x1="${x1+pnx}" y1="${y1+pny}" x2="${x1-pnx}" y2="${y1-pny}" stroke="${c}" stroke-width="1.5" opacity="0.5"/>`;
+      gh += `<line x1="${x2+pnx}" y1="${y2+pny}" x2="${x2-pnx}" y2="${y2-pny}" stroke="${c}" stroke-width="1.5" opacity="0.5"/>`;
+      break;
+    }
+    case 'arrow':
+      gh += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${sw}" opacity="0.5" marker-end="url(#arrowhead)"/>`;
+      break;
+    case 'distload': {
+      const dx = x2-x1, dy = y2-y1;
+      const len = Math.sqrt(dx*dx+dy*dy) || 1;
+      const n = Math.max(3, Math.round(len/20));
+      const ux = dx/len, uy = dy/len;
+      const px = -uy*15, py = ux*15;
+      gh += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${sw*0.6}" opacity="0.4"/>`;
+      for (let i = 0; i <= n; i++) {
+        const t = i/n;
+        const ax = x1+dx*t, ay = y1+dy*t;
+        gh += `<line x1="${ax}" y1="${ay}" x2="${ax+px}" y2="${ay+py}" stroke="${c}" stroke-width="${sw*0.7}" opacity="0.3" marker-end="url(#arrowhead)"/>`;
+      }
+      break;
+    }
+  }
+  return gh;
+}
+
+function renderGhost() {
+  const ghost = document.getElementById('ghostLayer');
+  if (!ghost) return;
+  let gh = '';
+  if (currentTool === 'windpath' && windPoints.length > 0) {
+    let d = `M${windPoints[0].x},${windPoints[0].y}`;
+    for (let i = 1; i < windPoints.length; i++) d += ` L${windPoints[i].x},${windPoints[i].y}`;
+    gh += `<path d="${d}" fill="none" stroke="${currentColor}" stroke-width="${currentStroke}" stroke-dasharray="4,3" opacity="0.5" marker-end="url(#arrowhead)"/>`;
+    windPoints.forEach(p => gh += `<circle cx="${p.x}" cy="${p.y}" r="3" fill="${currentColor}" opacity="0.4"/>`);
+  }
+  ghost.innerHTML = gh;
+}
+
+function onMouseUp(e) {
+  if (!drawing || !drawStart) { drawing = false; return; }
+  const end = snapTo(getSvgPoint(e));
+  const {x:x1,y:y1} = drawStart;
+  const {x:x2,y:y2} = end;
+  if (Math.abs(x2-x1) < 3 && Math.abs(y2-y1) < 3) { drawing = false; drawStart = null; return; }
+
+  const base = { color: currentColor, sw: currentStroke, dash: currentDash };
+
+  switch(currentTool) {
+    case 'xbrace':
+      addElement({ ...base, type:'xbrace', x1:Math.min(x1,x2), y1:Math.min(y1,y2), x2:Math.max(x1,x2), y2:Math.max(y1,y2) }); break;
+    case 'diag':
+      addElement({ ...base, type:'diag', x1, y1, x2, y2 }); break;
+    case 'vbrace':
+      addElement({ ...base, type:'vbrace', x1:Math.min(x1,x2), y1:Math.min(y1,y2), x2:Math.max(x1,x2), y2:Math.max(y1,y2) }); break;
+    case 'wall':
+      addElement({ ...base, type:'wall', x1:Math.min(x1,x2), y1:Math.min(y1,y2), x2:Math.max(x1,x2), y2:Math.max(y1,y2) }); break;
+    case 'plancher':
+      addElement({ ...base, type:'plancher', x1:Math.min(x1,x2), y1:Math.min(y1,y2), x2:Math.max(x1,x2), y2:Math.max(y1,y2) }); break;
+    case 'poutre': {
+      const lbl = prompt('Profilé (ex: IPE 300, HEB 200, IPE 450…) :', '') || '';
+      addElement({ ...base, type:'poutre', x1, y1, x2, y2, label: lbl.trim() }); break;
+    }
+    case 'tirant':
+      addElement({ ...base, type:'tirant', x1, y1, x2, y2 }); break;
+    case 'arrow':
+      addElement({ ...base, type:'arrow', x1, y1, x2, y2 }); break;
+    case 'distload':
+      addElement({ ...base, type:'distload', x1, y1, x2, y2 }); break;
+    case 'line':
+      addElement({ ...base, type:'line', x1, y1, x2, y2 }); break;
+  }
+
+  drawing = false;
+  drawStart = null;
+  document.getElementById('ghostLayer').innerHTML = '';
+}
+
+function onDblClick(e) {
+  if (currentTool === 'windpath' && windPoints.length >= 2) {
+    addElement({ type:'windpath', points: [...windPoints], color: currentColor, sw: currentStroke, dash: currentDash });
+    windPoints = [];
+    document.getElementById('ghostLayer').innerHTML = '';
+  }
+}
+
+function onKeyDown(e) {
+  if (e.key === 'Escape') cancelDrawing();
+  if ((e.key === 'Delete' || e.key === 'Backspace') && selectedEl !== null) deleteSelected();
+  if (e.ctrlKey && e.key === 'z') { e.preventDefault(); doUndo(); }
+  if (e.ctrlKey && e.key === 'y') { e.preventDefault(); doRedo(); }
+  if (e.key >= '1' && e.key <= '9' && !e.ctrlKey) {
+    const idx = parseInt(e.key) - 1;
+    if (idx < VIEWS.length) switchView(idx);
+  }
+}
+
+function cancelDrawing() {
+  drawing = false; drawStart = null; windPoints = [];
+  const ghost = document.getElementById('ghostLayer');
+  if (ghost) ghost.innerHTML = '';
+}
+
+// ════════════════════════════════════════════════════════════
+// ELEMENT MANAGEMENT
+// ════════════════════════════════════════════════════════════
+function addElement(el) {
+  const vid = VIEWS[currentView].id;
+  undoStacks[vid].push(JSON.parse(JSON.stringify(userElements[vid])));
+  redoStacks[vid] = [];
+  userElements[vid].push(el);
+  renderUserElements();
+}
+
+function selectElement(idx) {
+  selectedEl = idx;
+  renderUserElements();
+  document.getElementById('statusHint').textContent = `Élément sélectionné — Suppr pour effacer`;
+}
+
+function deselectAll() {
+  selectedEl = null;
+  renderUserElements();
+  document.getElementById('statusHint').textContent = getHint();
+}
+
+function deleteSelected() {
+  if (selectedEl === null) return;
+  const vid = VIEWS[currentView].id;
+  undoStacks[vid].push(JSON.parse(JSON.stringify(userElements[vid])));
+  redoStacks[vid] = [];
+  userElements[vid].splice(selectedEl, 1);
+  selectedEl = null;
+  renderUserElements();
+}
+
+function doUndo() {
+  const vid = VIEWS[currentView].id;
+  if (undoStacks[vid].length === 0) return;
+  redoStacks[vid].push(JSON.parse(JSON.stringify(userElements[vid])));
+  userElements[vid] = undoStacks[vid].pop();
+  selectedEl = null;
+  renderUserElements();
+}
+
+function doRedo() {
+  const vid = VIEWS[currentView].id;
+  if (redoStacks[vid].length === 0) return;
+  undoStacks[vid].push(JSON.parse(JSON.stringify(userElements[vid])));
+  userElements[vid] = redoStacks[vid].pop();
+  selectedEl = null;
+  renderUserElements();
+}
+
+function clearCurrentView() {
+  if (!confirm('Effacer tous les éléments de cette vue ?')) return;
+  const vid = VIEWS[currentView].id;
+  undoStacks[vid].push(JSON.parse(JSON.stringify(userElements[vid])));
+  redoStacks[vid] = [];
+  userElements[vid] = [];
+  selectedEl = null;
+  renderUserElements();
+}
+
+// ════════════════════════════════════════════════════════════
+// TOOL MANAGEMENT
+// ════════════════════════════════════════════════════════════
+function setTool(tool) {
+  currentTool = tool;
+  cancelDrawing();
+  document.querySelectorAll('.tool-btn').forEach(b => b.classList.toggle('active', b.dataset.tool === tool));
+  const names = {
+    select:'Sélection', xbrace:'Croix X', diag:'Diagonale', vbrace:'Palée V',
+    wall:'Voile', plancher:'Plancher', poutre:'Poutre', tirant:'Tirant', arrow:'Flèche', windpath:'Trajet vent',
+    distload:'Charge répartie', text:'Texte', line:'Ligne'
+  };
+  document.getElementById('statusTool').textContent = names[tool]||tool;
+  document.getElementById('statusHint').textContent = getHint();
+}
+
+function getHint() {
+  const hints = {
+    select: 'Cliquez sur un élément pour le sélectionner',
+    xbrace: 'Cliquez-glissez pour placer la croix de contreventement',
+    diag: 'Cliquez-glissez pour tracer la diagonale',
+    vbrace: 'Cliquez-glissez pour la palée en V',
+    wall: 'Cliquez-glissez pour tracer le voile béton',
+    plancher: 'Cliquez-glissez pour placer le plancher diaphragme',
+    poutre: 'Cliquez-glissez pour placer la poutre (profilé demandé au relâchement)',
+    tirant: 'Cliquez-glissez pour le tirant',
+    arrow: 'Cliquez-glissez pour la flèche',
+    windpath: 'Cliquez pour ajouter des points, double-cliquez pour finir',
+    distload: 'Cliquez-glissez le long de la ligne d\'application',
+    text: 'Cliquez pour placer le texte',
+    line: 'Cliquez-glissez pour la ligne'
+  };
+  return hints[currentTool] || '';
+}
+
+function setColor(el) {
+  currentColor = el.dataset.color;
+  document.querySelectorAll('.color-dot').forEach(d => d.classList.toggle('active', d === el));
+}
+function setStroke(sw, el) {
+  currentStroke = sw;
+  document.querySelectorAll('.stroke-btn[data-sw]').forEach(b => b.classList.toggle('active', parseInt(b.dataset.sw) === sw));
+}
+function setDash(dash, el) {
+  currentDash = dash;
+  el.parentElement.querySelectorAll('.stroke-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function togglePorteeDisplay(val) {
+  showPortee = val;
+  renderView();
+}
+
+// ════════════════════════════════════════════════════════════
+// EXPORT
+// ════════════════════════════════════════════════════════════
+function exportPNG() {
+  const svg = document.getElementById('mainSvg');
+  const svgData = new XMLSerializer().serializeToString(svg);
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const img = new Image();
+  const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+  img.onload = () => {
+    canvas.width = img.width * 2;
+    canvas.height = img.height * 2;
+    ctx.scale(2, 2);
+    ctx.fillStyle = '#faf9f6';
+    ctx.fillRect(0, 0, img.width, img.height);
+    ctx.drawImage(img, 0, 0);
+    const a = document.createElement('a');
+    a.download = `${VIEWS[currentView].id}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+  img.src = url;
+}
+
+function exportAllPNG() {
+  const originalView = currentView;
+  let delay = 0;
+  VIEWS.forEach((v, i) => {
+    setTimeout(() => { switchView(i); setTimeout(() => exportPNG(), 100); }, delay);
+    delay += 400;
+  });
+  setTimeout(() => switchView(originalView), delay + 200);
+}
+
+// ════════════════════════════════════════════════════════════
+// GO
+// ════════════════════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
