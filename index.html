@@ -601,12 +601,12 @@ function renderPlan(level) {
     s += `<rect x="0" y="0" width="${tw}" height="${th}" fill="none" stroke="#1c1917" stroke-width="2"/>`;
     s += `<rect x="${xE}" y="0" width="${tw}" height="${th}" fill="none" stroke="#1c1917" stroke-width="2"/>`;
 
-    // ── VOILES Tour Ouest: Façade ① (west side, x=0) and Façade ⑥ (south side, y=th) ──
+    // ── VOILES Tour Ouest: Façade ① (west side, x=0) and Façade ⑥ (north/top side, y=0) ──
     const voileThk = 8; // visual thickness in px
     // Voile on façade ① (full height of west face of Tour Ouest)
     s += `<rect x="${-voileThk}" y="0" width="${voileThk}" height="${th}" fill="url(#hatch45)" stroke="#78716c" stroke-width="1"/>`;
-    // Voile on façade ⑥ (full width of south face of Tour Ouest)
-    s += `<rect x="0" y="${th}" width="${tw}" height="${voileThk}" fill="url(#hatch45)" stroke="#78716c" stroke-width="1"/>`;
+    // Voile on façade ⑥ (full width of north/top face of Tour Ouest)
+    s += `<rect x="0" y="${-voileThk}" width="${tw}" height="${voileThk}" fill="url(#hatch45)" stroke="#78716c" stroke-width="1"/>`;
 
     // ── COLUMN GRID ── columns at 4m spacing along x in each tower
     [0, 4*S, tw].forEach(x => {
@@ -640,12 +640,12 @@ function renderPlan(level) {
 
     // ── FACADE LABELS (circled numbers) ──
     s += facadeLabel(-30, th/2, '①');
-    s += facadeLabel(tw/2, -48, '⑤');
-    s += facadeLabel(tw/2, th+voileThk+18, '⑥');
+    s += facadeLabel(tw/2, -voileThk-18, '⑥');
+    s += facadeLabel(tw/2, th+18, '⑤');
     s += facadeLabel(tw+14, th/2, '②');
     s += facadeLabel(xE-14, th/2, '③');
-    s += facadeLabel(xE+tw/2, -48, '⑤');
-    s += facadeLabel(xE+tw/2, th+18, '⑥');
+    s += facadeLabel(xE+tw/2, -48, '⑥');
+    s += facadeLabel(xE+tw/2, th+18, '⑤');
     s += facadeLabel(xE+tw+30, th/2, '④');
 
     // ── ZONE LABELS ──
@@ -662,7 +662,7 @@ function renderPlan(level) {
     s += `<text x="-55" y="${th/2+4}" text-anchor="middle" class="orient-label" fill="#1c1917">O</text>`;
     s += `<text x="${totalW+55}" y="${th/2+4}" text-anchor="middle" class="orient-label" fill="#1c1917">E</text>`;
 
-    return { svg: s, w: totalW, h: th + voileThk, snaps };
+    return { svg: s, w: totalW, h: th, snaps };
 
   } else {
     // ── TOITURE ── full 28m slab, tôles (no diaphragm)
@@ -1524,3 +1524,4 @@ init();
 </script>
 </body>
 </html>
+
